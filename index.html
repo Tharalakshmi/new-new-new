@@ -2,226 +2,146 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Productivity Space</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>Snake Xenzia</title>
 <style>
-*{box-sizing:border-box;font-family:Arial,sans-serif}
-body{
-margin:0;
-min-height:100vh;
-background:linear-gradient(135deg,#0f1020,#1b1d3a);
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-}
+  body {
+    margin: 0;
+    height: 100vh;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    color: white;
+  }
 
-.hidden{display:none}
+  .container {
+    text-align: center;
+  }
 
-.card{
-background:#1f2140;
-border-radius:20px;
-padding:20px;
-width:300px;
-margin:10px;
-box-shadow:0 15px 40px rgba(0,0,0,0.5);
-}
+  input, button {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    margin: 5px;
+  }
 
-input,button{
-width:100%;
-padding:10px;
-border-radius:12px;
-border:none;
-margin-top:10px;
-font-size:14px;
-}
+  button {
+    background: #00ff99;
+    cursor: pointer;
+  }
 
-button{
-background:#ff4d6d;
-color:white;
-cursor:pointer;
-}
+  canvas {
+    background: black;
+    display: none;
+    border: 2px solid #00ff99;
+  }
 
-.container{
-display:flex;
-flex-wrap:wrap;
-justify-content:center;
-max-width:1200px;
-}
-
-.list-item{
-display:flex;
-align-items:center;
-margin-top:6px;
-}
-
-.list-item input{width:auto;margin-right:8px}
-
-canvas{
-background:black;
-border-radius:12px;
-display:block;
-margin:auto;
-}
+  #gameOver {
+    display: none;
+    font-size: 22px;
+    margin-top: 15px;
+    color: #ff6666;
+  }
 </style>
 </head>
 
 <body>
-
-<!-- NAME SCREEN -->
-<div id="nameScreen" class="card">
-<h2>✨ What is your name?</h2>
-<input id="nameInput" placeholder="Enter your name">
-<button onclick="saveName()">Enter</button>
-</div>
-
-<!-- APP -->
-<div id="app" class="hidden">
-<h1 id="title" style="text-align:center"></h1>
-
 <div class="container">
+  <div id="nameScreen">
+    <h2>Enter Your Name 🐍</h2>
+    <input type="text" id="playerName" placeholder="Your name">
+    <br>
+    <button onclick="startGame()">Start Game</button>
+  </div>
 
-<div class="card">
-<h2>📝 Sticky Notes</h2>
-<input id="noteInput" placeholder="Write a note">
-<button onclick="addNote()">Add</button>
-<div id="notes"></div>
-</div>
+  <canvas id="game" width="400" height="400"></canvas>
 
-<div class="card">
-<h2>✅ To-Do</h2>
-<input id="todoInput" placeholder="New task">
-<button onclick="addTodo()">Add</button>
-<div id="todos"></div>
-</div>
-
-<div class="card">
-<h2>📅 Planner</h2>
-<input id="planInput" placeholder="Time – Activity">
-<button onclick="addPlan()">Add</button>
-<div id="plans"></div>
-</div>
-
-<div class="card">
-<h2>🎮 Snake Game</h2>
-<button onclick="startGame()">Play Game</button>
-<p id="gameMsg"></p>
-<canvas id="game" width="260" height="260"></canvas>
-</div>
-
-</div>
+  <div id="gameOver"></div>
 </div>
 
 <script>
-/* NAME */
-function saveName(){
-const n=document.getElementById("nameInput").value.trim();
-if(!n)return;
-localStorage.setItem("name",n);
-loadApp();
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let snake, food, dx, dy, score, name;
+
+const box = 20;
+
+function startGame() {
+  name = document.getElementById("playerName").value.trim();
+  if (name === "") {
+    alert("Please enter your name");
+    return;
+  }
+
+  document.getElementById("nameScreen").style.display = "none";
+  canvas.style.display = "block";
+
+  snake = [{ x: 200, y: 200 }];
+  food = randomFood();
+  dx = box;
+  dy = 0;
+  score = 0;
+
+  document.getElementById("gameOver").style.display = "none";
+
+  document.addEventListener("keydown", changeDirection);
+  gameLoop = setInterval(draw, 120);
 }
 
-function loadApp(){
-const n=localStorage.getItem("name");
-if(!n)return;
-nameScreen.classList.add("hidden");
-app.classList.remove("hidden");
-title.innerText=`✨ ${n}'s Productivity Space ✨`;
-}
-loadApp();
-
-/* NOTES */
-function addNote(){
-const t=noteInput.value.trim();
-if(!t)return;
-notes.innerHTML+=`<div class="list-item"><input type="checkbox"><span>${t}</span></div>`;
-noteInput.value="";
+function randomFood() {
+  return {
+    x: Math.floor(Math.random() * 20) * box,
+    y: Math.floor(Math.random() * 20) * box
+  };
 }
 
-function addTodo(){
-const t=todoInput.value.trim();
-if(!t)return;
-todos.innerHTML+=`<div class="list-item"><input type="checkbox"><span>${t}</span></div>`;
-todoInput.value="";
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // draw food
+  ctx.fillStyle = "red";
+  ctx.fillRect(food.x, food.y, box, box);
+
+  // draw snake
+  ctx.fillStyle = "#00ff99";
+  snake.forEach(part => ctx.fillRect(part.x, part.y, box, box));
+
+  let head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+  // game over conditions
+  if (
+    head.x < 0 || head.y < 0 ||
+    head.x >= canvas.width || head.y >= canvas.height ||
+    snake.some(part => part.x === head.x && part.y === head.y)
+  ) {
+    clearInterval(gameLoop);
+    canvas.style.display = "none";
+    document.getElementById("gameOver").style.display = "block";
+    document.getElementById("gameOver").innerHTML =
+      `<b>${name}</b> is a snake in everyone’s life 🐍<br><br>
+       <button onclick="location.reload()">Play Again</button>`;
+    return;
+  }
+
+  snake.unshift(head);
+
+  if (head.x === food.x && head.y === food.y) {
+    food = randomFood();
+  } else {
+    snake.pop();
+  }
 }
 
-function addPlan(){
-const t=planInput.value.trim();
-if(!t)return;
-plans.innerHTML+=`<div class="list-item"><input type="checkbox"><span>${t}</span></div>`;
-planInput.value="";
-}
-
-/* ===== SNAKE GAME (FIXED) ===== */
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const size=20;
-let snake,food,dx,dy,interval;
-
-function startGame(){
-snake=[{x:120,y:120}];
-dx=size; dy=0;
-food=randomFood();
-gameMsg.innerText="";
-clearInterval(interval);
-interval=setInterval(update,150);
-canvas.focus();
-}
-
-function randomFood(){
-return {
-x:Math.floor(Math.random()*13)*size,
-y:Math.floor(Math.random()*13)*size
-};
-}
-
-document.addEventListener("keydown",e=>{
-if(e.key==="ArrowUp"&&dy===0){dx=0;dy=-size}
-if(e.key==="ArrowDown"&&dy===0){dx=0;dy=size}
-if(e.key==="ArrowLeft"&&dx===0){dx=-size;dy=0}
-if(e.key==="ArrowRight"&&dx===0){dx=size;dy=0}
-});
-
-function update(){
-const head={x:snake[0].x+dx,y:snake[0].y+dy};
-
-/* wall hit */
-if(head.x<0||head.y<0||head.x>=260||head.y>=260){
-return endGame();
-}
-
-/* self hit */
-for(let s of snake){
-if(s.x===head.x && s.y===head.y){
-return endGame();
-}
-}
-
-snake.unshift(head);
-
-if(head.x===food.x && head.y===food.y){
-food=randomFood();
-}else{
-snake.pop();
-}
-
-draw();
-}
-
-function draw(){
-ctx.clearRect(0,0,260,260);
-ctx.fillStyle="lime";
-snake.forEach(s=>ctx.fillRect(s.x,s.y,size,size));
-ctx.fillStyle="red";
-ctx.fillRect(food.x,food.y,size,size);
-}
-
-function endGame(){
-clearInterval(interval);
-gameMsg.innerText="🐍 You are a snake";
+function changeDirection(e) {
+  if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -box; }
+  if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = box; }
+  if (e.key === "ArrowLeft" && dx === 0) { dx = -box; dy = 0; }
+  if (e.key === "ArrowRight" && dx === 0) { dx = box; dy = 0; }
 }
 </script>
-
 </body>
 </html>
