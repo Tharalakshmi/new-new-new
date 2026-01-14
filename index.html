@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Productivity Space</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+*{box-sizing:border-box;font-family:"Poppins",sans-serif}
 :root{
   --accent:#b39ddb;
   --bg:#0f1020;
@@ -14,6 +16,9 @@
 
 body{
   margin:0;
+  background:linear-gradient(135deg,#0f1023,#1c1f3a);
+  color:white;
+  min-height:100vh;
   font-family:'Poppins',sans-serif;
   background:var(--bg);
   color:var(--text);
@@ -21,31 +26,45 @@ body{
   overflow-x:hidden;
 }
 
+h1{text-align:center;margin:20px 0}
 h1{text-align:center;margin-bottom:15px;}
 
 .container{
   display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+  padding:20px;
   grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
   gap:25px;
 }
 
 .card{
+  background:#1f2340;
   background:var(--card);
   backdrop-filter:blur(14px);
   border-radius:20px;
+  padding:15px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
   padding:20px;
   box-shadow:0 0 40px rgba(179,157,219,.25);
 }
 
+.card h2{margin-bottom:10px}
+
+input,textarea,button{
 textarea,input{
   width:100%;
   padding:10px;
   border:none;
   border-radius:10px;
+  margin-bottom:10px;
   margin-top:10px;
 }
 
+textarea{resize:none}
+
 button{
+  background:#ff2d2d;
   width:100%;
   padding:10px;
   margin-top:10px;
@@ -53,16 +72,23 @@ button{
   border-radius:12px;
   background:var(--accent);
   color:white;
+  font-weight:bold;
   cursor:pointer;
 }
 
+button:hover{opacity:.9}
+
+ul{list-style:none;padding:0;margin:0}
+li{
 .item{
   display:flex;
   align-items:center;
   gap:10px;
+  background:#2a2f55;
   background:#2a2b55;
   padding:8px;
   border-radius:10px;
+  margin-bottom:6px;
   margin-bottom:8px;
 }
 
@@ -91,17 +117,20 @@ button{
 }
 
 /* Snow */
-.snow{
-  position:fixed;
-  top:-10px;
+@@ -69,153 +97,228 @@
   color:white;
   animation:fall linear infinite;
+}
+@keyframes fall{
+  to{transform:translateY(110vh)}
 }
 @keyframes fall{to{transform:translateY(110vh);}}
 
 /* Snake */
 canvas{
   background:black;
+  border-radius:15px;
+  width:100%;
   border-radius:10px;
 }
 </style>
@@ -124,24 +153,40 @@ canvas{
 
 <div class="container">
 
+<!-- Sticky Notes -->
 <!-- NOTES -->
 <div class="card">
+  <h2>📝 Sticky Notes</h2>
+  <textarea id="noteText" placeholder="Write a note..."></textarea>
+  <button onclick="addNote()">Add Note</button>
+  <ul id="notesList"></ul>
 <h2>🗒️ Sticky Notes</h2>
 <div id="notes"></div>
 <textarea id="noteText" placeholder="Write a note..."></textarea>
 <button onclick="addNote()">Add Note</button>
 </div>
 
+<!-- To Do -->
 <!-- TODO -->
 <div class="card">
+  <h2>✅ To-Do</h2>
+  <input id="todoInput" placeholder="New task">
+  <button onclick="addTodo()">Add</button>
+  <ul id="todoList"></ul>
 <h2>✅ To-Do</h2>
 <input id="todoInput" placeholder="New task...">
 <button onclick="addTodo()">Add</button>
 <div id="todoList"></div>
 </div>
 
+<!-- Planner -->
 <!-- PLANNER -->
 <div class="card">
+  <h2>📅 Planner</h2>
+  <input id="planTime" placeholder="Time">
+  <input id="planText" placeholder="Activity">
+  <button onclick="addPlan()">Add</button>
+  <ul id="planList"></ul>
 <h2>📅 Planner</h2>
 <input id="timeInput" placeholder="Time">
 <input id="activityInput" placeholder="Activity">
@@ -149,8 +194,11 @@ canvas{
 <div id="plans"></div>
 </div>
 
+<!-- Snake -->
 <!-- GAME -->
 <div class="card">
+  <h2>🎮 Snake</h2>
+  <canvas id="game" width="240" height="240"></canvas>
 <h2>🎮 Snake Game</h2>
 <canvas id="game" width="200" height="200"></canvas>
 <p id="gameText"></p>
@@ -158,8 +206,17 @@ canvas{
 
 </div>
 
+<!-- Music -->
+<audio autoplay loop volume="0.2">
+  <source src="https://cdn.pixabay.com/audio/2022/10/09/audio_5e7c8ef65f.mp3">
+</audio>
+
 <script>
 /* NAME */
+let name = localStorage.getItem("name");
+if(!name){
+  name = prompt("What is your name?");
+  localStorage.setItem("name",name);
 let n = localStorage.name || prompt("What is your name?");
 localStorage.name = n;
 title.innerText = `✨ ${n}'s Productivity Space ✨`;
@@ -169,12 +226,20 @@ function setAccent(c){
   document.documentElement.style.setProperty("--accent",c);
   localStorage.accent=c;
 }
+document.getElementById("title").innerText =
+`✨ ${name}'s Productivity Space ✨`;
 if(localStorage.accent)setAccent(localStorage.accent);
 
 /* NOTES */
 let notes = JSON.parse(localStorage.notes || "[]");
 
 function addNote(){
+  const text=document.getElementById("noteText").value;
+  if(!text) return;
+  const li=document.createElement("li");
+  li.innerHTML=`<input type="checkbox"> ${text}`;
+  document.getElementById("notesList").appendChild(li);
+  document.getElementById("noteText").value="";
   if(!noteText.value) return;
   notes.push({ text: noteText.value, done:false });
   noteText.value="";
@@ -210,6 +275,12 @@ renderNotes();
 let todos = JSON.parse(localStorage.todos || "[]");
 
 function addTodo(){
+  const text=document.getElementById("todoInput").value;
+  if(!text) return;
+  const li=document.createElement("li");
+  li.innerHTML=`<input type="checkbox"> ${text}`;
+  document.getElementById("todoList").appendChild(li);
+  document.getElementById("todoInput").value="";
   if(!todoInput.value) return;
   todos.push({ text: todoInput.value, done:false });
   todoInput.value="";
@@ -245,6 +316,14 @@ renderTodos();
 let plans = JSON.parse(localStorage.plans || "[]");
 
 function addPlan(){
+  const t=document.getElementById("planTime").value;
+  const a=document.getElementById("planText").value;
+  if(!t||!a) return;
+  const li=document.createElement("li");
+  li.innerHTML=`<input type="checkbox"> <b>${t}</b> – ${a}`;
+  document.getElementById("planList").appendChild(li);
+  document.getElementById("planTime").value="";
+  document.getElementById("planText").value="";
   if(!timeInput.value || !activityInput.value) return;
   plans.push({ text:`${timeInput.value} – ${activityInput.value}`, done:false });
   timeInput.value=activityInput.value="";
@@ -278,8 +357,11 @@ renderPlans();
 
 /* SNOW */
 for(let i=0;i<30;i++){
+  const s=document.createElement("div");
   let s=document.createElement("div");
   s.className="snow";
+  s.style.left=Math.random()*100+"vw";
+  s.style.animationDuration=3+Math.random()*5+"s";
   s.innerText="❄";
   s.style.left=Math.random()*100+"vw";
   s.style.fontSize=10+Math.random()*20+"px";
@@ -287,11 +369,24 @@ for(let i=0;i<30;i++){
   document.body.appendChild(s);
 }
 
+/* SNAKE GAME */
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+let snake=[{x:120,y:120}];
+let dir={x:20,y:0};
+let food={x:60,y:60};
 /* SNAKE */
 const c=document.getElementById("game");
 const ctx=c.getContext("2d");
 let snake=[{x:100,y:100}],dx=20,dy=0,food={x:60,y:60};
 
+function draw(){
+  ctx.clearRect(0,0,240,240);
+  ctx.fillStyle="red";
+  ctx.fillRect(food.x,food.y,20,20);
+  ctx.fillStyle="lime";
+  snake.forEach(p=>ctx.fillRect(p.x,p.y,20,20));
+}
 document.addEventListener("keydown",e=>{
   if(e.key=="ArrowUp"){dx=0;dy=-20;}
   if(e.key=="ArrowDown"){dx=0;dy=20;}
@@ -299,17 +394,37 @@ document.addEventListener("keydown",e=>{
   if(e.key=="ArrowRight"){dx=20;dy=0;}
 });
 
+function update(){
+  const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  if(head.x<0||head.y<0||head.x>=240||head.y>=240){
+    alert("You are a snake 🐍");
+    snake=[{x:120,y:120}];
+    dir={x:20,y:0};
 function game(){
   let h={x:snake[0].x+dx,y:snake[0].y+dy};
   if(h.x<0||h.y<0||h.x>=200||h.y>=200){
     gameText.innerText="🐍 You are a snake";
     return;
   }
+  snake.unshift(head);
+  if(head.x===food.x&&head.y===food.y){
+    food={x:Math.floor(Math.random()*12)*20,
+          y:Math.floor(Math.random()*12)*20};
+  } else snake.pop();
+  draw();
+}
+setInterval(update,200);
   snake.unshift(h);
   if(h.x==food.x&&h.y==food.y){
     food={x:Math.floor(Math.random()*10)*20,y:Math.floor(Math.random()*10)*20};
   }else snake.pop();
 
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp") dir={x:0,y:-20};
+  if(e.key==="ArrowDown") dir={x:0,y:20};
+  if(e.key==="ArrowLeft") dir={x:-20,y:0};
+  if(e.key==="ArrowRight") dir={x:20,y:0};
+});
   ctx.clearRect(0,0,200,200);
   ctx.fillStyle="lime";
   snake.forEach(p=>ctx.fillRect(p.x,p.y,18,18));
@@ -322,4 +437,3 @@ game();
 </script>
 
 </body>
-</html>
