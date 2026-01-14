@@ -3,91 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <title>Productivity Space</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-:root{
-  --accent:#b39ddb;
-  --bg:#0f1020;
-  --card:#1e1f3aee;
-  --text:#ffffff;
-}
-
+*{box-sizing:border-box;font-family:"Poppins",sans-serif}
 body{
   margin:0;
-  font-family:'Poppins',sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  padding:30px;
+  background:linear-gradient(135deg,#0f1023,#1c1f3a);
+  color:white;
+  min-height:100vh;
   overflow-x:hidden;
 }
 
-h1{text-align:center;margin-bottom:15px;}
-
+h1{text-align:center;margin:20px 0}
 .container{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:25px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+  padding:20px;
 }
 
 .card{
-  background:var(--card);
-  backdrop-filter:blur(14px);
+  background:#1f2340;
   border-radius:20px;
-  padding:20px;
-  box-shadow:0 0 40px rgba(179,157,219,.25);
+  padding:15px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
 
-textarea,input{
+.card h2{margin-bottom:10px}
+
+input,textarea,button{
   width:100%;
   padding:10px;
   border:none;
   border-radius:10px;
-  margin-top:10px;
+  margin-bottom:10px;
 }
 
+textarea{resize:none}
+
 button{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border:none;
-  border-radius:12px;
-  background:var(--accent);
+  background:#ff2d2d;
   color:white;
+  font-weight:bold;
   cursor:pointer;
 }
 
-.item{
+button:hover{opacity:.9}
+
+ul{list-style:none;padding:0;margin:0}
+li{
   display:flex;
   align-items:center;
   gap:10px;
-  background:#2a2b55;
+  background:#2a2f55;
   padding:8px;
   border-radius:10px;
-  margin-bottom:8px;
-}
-
-.item.done{
-  opacity:.6;
-  text-decoration:line-through;
-}
-
-/* Aurora */
-.aurora{
-  position:fixed;
-  top:-50%;
-  left:-50%;
-  width:200%;
-  height:200%;
-  background:
-    radial-gradient(circle at 30% 30%,#7f7fd5,transparent 40%),
-    radial-gradient(circle at 70% 40%,#86a8e7,transparent 40%),
-    radial-gradient(circle at 50% 70%,#91eae4,transparent 40%);
-  animation:move 20s infinite alternate;
-  opacity:.25;
-  z-index:-2;
-}
-@keyframes move{
-  to{transform:translate(100px,100px);}
+  margin-bottom:6px;
 }
 
 /* Snow */
@@ -97,228 +69,153 @@ button{
   color:white;
   animation:fall linear infinite;
 }
-@keyframes fall{to{transform:translateY(110vh);}}
+@keyframes fall{
+  to{transform:translateY(110vh)}
+}
 
 /* Snake */
 canvas{
   background:black;
-  border-radius:10px;
+  border-radius:15px;
+  width:100%;
 }
 </style>
 </head>
 
 <body>
 
-<div class="aurora"></div>
-
 <h1 id="title">✨ Productivity Space ✨</h1>
-
-<div style="text-align:center;margin-bottom:15px">
-  🎨 Theme Color:
-  <input type="color" onchange="setAccent(this.value)">
-</div>
-
-<audio autoplay loop>
-  <source src="https://cdn.pixabay.com/audio/2023/03/14/audio_4c3a02b5d1.mp3">
-</audio>
 
 <div class="container">
 
-<!-- NOTES -->
+<!-- Sticky Notes -->
 <div class="card">
-<h2>🗒️ Sticky Notes</h2>
-<div id="notes"></div>
-<textarea id="noteText" placeholder="Write a note..."></textarea>
-<button onclick="addNote()">Add Note</button>
+  <h2>📝 Sticky Notes</h2>
+  <textarea id="noteText" placeholder="Write a note..."></textarea>
+  <button onclick="addNote()">Add Note</button>
+  <ul id="notesList"></ul>
 </div>
 
-<!-- TODO -->
+<!-- To Do -->
 <div class="card">
-<h2>✅ To-Do</h2>
-<input id="todoInput" placeholder="New task...">
-<button onclick="addTodo()">Add</button>
-<div id="todoList"></div>
+  <h2>✅ To-Do</h2>
+  <input id="todoInput" placeholder="New task">
+  <button onclick="addTodo()">Add</button>
+  <ul id="todoList"></ul>
 </div>
 
-<!-- PLANNER -->
+<!-- Planner -->
 <div class="card">
-<h2>📅 Planner</h2>
-<input id="timeInput" placeholder="Time">
-<input id="activityInput" placeholder="Activity">
-<button onclick="addPlan()">Add</button>
-<div id="plans"></div>
+  <h2>📅 Planner</h2>
+  <input id="planTime" placeholder="Time">
+  <input id="planText" placeholder="Activity">
+  <button onclick="addPlan()">Add</button>
+  <ul id="planList"></ul>
 </div>
 
-<!-- GAME -->
+<!-- Snake -->
 <div class="card">
-<h2>🎮 Snake Game</h2>
-<canvas id="game" width="200" height="200"></canvas>
-<p id="gameText"></p>
+  <h2>🎮 Snake</h2>
+  <canvas id="game" width="240" height="240"></canvas>
 </div>
 
 </div>
+
+<!-- Music -->
+<audio autoplay loop volume="0.2">
+  <source src="https://cdn.pixabay.com/audio/2022/10/09/audio_5e7c8ef65f.mp3">
+</audio>
 
 <script>
 /* NAME */
-let n = localStorage.name || prompt("What is your name?");
-localStorage.name = n;
-title.innerText = `✨ ${n}'s Productivity Space ✨`;
-
-/* THEME */
-function setAccent(c){
-  document.documentElement.style.setProperty("--accent",c);
-  localStorage.accent=c;
+let name = localStorage.getItem("name");
+if(!name){
+  name = prompt("What is your name?");
+  localStorage.setItem("name",name);
 }
-if(localStorage.accent)setAccent(localStorage.accent);
+document.getElementById("title").innerText =
+`✨ ${name}'s Productivity Space ✨`;
 
 /* NOTES */
-let notes = JSON.parse(localStorage.notes || "[]");
-
 function addNote(){
-  if(!noteText.value) return;
-  notes.push({ text: noteText.value, done:false });
-  noteText.value="";
-  saveNotes();
+  const text=document.getElementById("noteText").value;
+  if(!text) return;
+  const li=document.createElement("li");
+  li.innerHTML=`<input type="checkbox"> ${text}`;
+  document.getElementById("notesList").appendChild(li);
+  document.getElementById("noteText").value="";
 }
-
-function saveNotes(){
-  localStorage.notes = JSON.stringify(notes);
-  renderNotes();
-}
-
-function renderNotes(){
-  notesDiv.innerHTML="";
-  notes.forEach((n,i)=>{
-    let d=document.createElement("div");
-    d.className="item"+(n.done?" done":"");
-
-    let c=document.createElement("input");
-    c.type="checkbox";
-    c.checked=n.done;
-    c.onchange=()=>{n.done=c.checked;saveNotes();};
-
-    let s=document.createElement("span");
-    s.innerText=n.text;
-
-    d.append(c,s);
-    notesDiv.appendChild(d);
-  });
-}
-renderNotes();
 
 /* TODO */
-let todos = JSON.parse(localStorage.todos || "[]");
-
 function addTodo(){
-  if(!todoInput.value) return;
-  todos.push({ text: todoInput.value, done:false });
-  todoInput.value="";
-  saveTodos();
+  const text=document.getElementById("todoInput").value;
+  if(!text) return;
+  const li=document.createElement("li");
+  li.innerHTML=`<input type="checkbox"> ${text}`;
+  document.getElementById("todoList").appendChild(li);
+  document.getElementById("todoInput").value="";
 }
-
-function saveTodos(){
-  localStorage.todos = JSON.stringify(todos);
-  renderTodos();
-}
-
-function renderTodos(){
-  todoList.innerHTML="";
-  todos.forEach((t,i)=>{
-    let d=document.createElement("div");
-    d.className="item"+(t.done?" done":"");
-
-    let c=document.createElement("input");
-    c.type="checkbox";
-    c.checked=t.done;
-    c.onchange=()=>{t.done=c.checked;saveTodos();};
-
-    let s=document.createElement("span");
-    s.innerText=t.text;
-
-    d.append(c,s);
-    todoList.appendChild(d);
-  });
-}
-renderTodos();
 
 /* PLANNER */
-let plans = JSON.parse(localStorage.plans || "[]");
-
 function addPlan(){
-  if(!timeInput.value || !activityInput.value) return;
-  plans.push({ text:`${timeInput.value} – ${activityInput.value}`, done:false });
-  timeInput.value=activityInput.value="";
-  savePlans();
+  const t=document.getElementById("planTime").value;
+  const a=document.getElementById("planText").value;
+  if(!t||!a) return;
+  const li=document.createElement("li");
+  li.innerHTML=`<input type="checkbox"> <b>${t}</b> – ${a}`;
+  document.getElementById("planList").appendChild(li);
+  document.getElementById("planTime").value="";
+  document.getElementById("planText").value="";
 }
-
-function savePlans(){
-  localStorage.plans = JSON.stringify(plans);
-  renderPlans();
-}
-
-function renderPlans(){
-  plansDiv.innerHTML="";
-  plans.forEach((p,i)=>{
-    let d=document.createElement("div");
-    d.className="item"+(p.done?" done":"");
-
-    let c=document.createElement("input");
-    c.type="checkbox";
-    c.checked=p.done;
-    c.onchange=()=>{p.done=c.checked;savePlans();};
-
-    let s=document.createElement("span");
-    s.innerText=p.text;
-
-    d.append(c,s);
-    plansDiv.appendChild(d);
-  });
-}
-renderPlans();
 
 /* SNOW */
 for(let i=0;i<30;i++){
-  let s=document.createElement("div");
+  const s=document.createElement("div");
   s.className="snow";
-  s.innerText="❄";
   s.style.left=Math.random()*100+"vw";
-  s.style.fontSize=10+Math.random()*20+"px";
-  s.style.animationDuration=5+Math.random()*5+"s";
+  s.style.animationDuration=3+Math.random()*5+"s";
+  s.innerText="❄";
   document.body.appendChild(s);
 }
 
-/* SNAKE */
-const c=document.getElementById("game");
-const ctx=c.getContext("2d");
-let snake=[{x:100,y:100}],dx=20,dy=0,food={x:60,y:60};
+/* SNAKE GAME */
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+let snake=[{x:120,y:120}];
+let dir={x:20,y:0};
+let food={x:60,y:60};
 
-document.addEventListener("keydown",e=>{
-  if(e.key=="ArrowUp"){dx=0;dy=-20;}
-  if(e.key=="ArrowDown"){dx=0;dy=20;}
-  if(e.key=="ArrowLeft"){dx=-20;dy=0;}
-  if(e.key=="ArrowRight"){dx=20;dy=0;}
-});
+function draw(){
+  ctx.clearRect(0,0,240,240);
+  ctx.fillStyle="red";
+  ctx.fillRect(food.x,food.y,20,20);
+  ctx.fillStyle="lime";
+  snake.forEach(p=>ctx.fillRect(p.x,p.y,20,20));
+}
 
-function game(){
-  let h={x:snake[0].x+dx,y:snake[0].y+dy};
-  if(h.x<0||h.y<0||h.x>=200||h.y>=200){
-    gameText.innerText="🐍 You are a snake";
+function update(){
+  const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  if(head.x<0||head.y<0||head.x>=240||head.y>=240){
+    alert("You are a snake 🐍");
+    snake=[{x:120,y:120}];
+    dir={x:20,y:0};
     return;
   }
-  snake.unshift(h);
-  if(h.x==food.x&&h.y==food.y){
-    food={x:Math.floor(Math.random()*10)*20,y:Math.floor(Math.random()*10)*20};
-  }else snake.pop();
-
-  ctx.clearRect(0,0,200,200);
-  ctx.fillStyle="lime";
-  snake.forEach(p=>ctx.fillRect(p.x,p.y,18,18));
-  ctx.fillStyle="red";
-  ctx.fillRect(food.x,food.y,18,18);
-
-  setTimeout(game,200);
+  snake.unshift(head);
+  if(head.x===food.x&&head.y===food.y){
+    food={x:Math.floor(Math.random()*12)*20,
+          y:Math.floor(Math.random()*12)*20};
+  } else snake.pop();
+  draw();
 }
-game();
+setInterval(update,200);
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp") dir={x:0,y:-20};
+  if(e.key==="ArrowDown") dir={x:0,y:20};
+  if(e.key==="ArrowLeft") dir={x:-20,y:0};
+  if(e.key==="ArrowRight") dir={x:20,y:0};
+});
 </script>
 
 </body>
